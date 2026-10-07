@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaTracker PWA</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#6366f1', // Colore Indaco per pulsanti e accenti
+                        darkbg: '#0f172a', // Sfondo scuro elegante
+                        cardbg: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome per le icone (verrà utile per la dashboard) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+
+</head>
+<body class="bg-darkbg text-gray-100 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- SCHERMATA DI LOGIN / REGISTRAZIONE -->
+    <div id="auth-container" class="flex-1 flex items-center justify-center p-4">
+        <div class="bg-cardbg p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
+            <div class="text-center mb-8">
+                <i class="fa-solid fa-clapperboard text-brand text-4xl mb-3"></i>
+                <h1 class="text-3xl font-bold text-white">MediaTracker</h1>
+                <p class="text-gray-400 text-sm mt-1">Traccia Film, Serie TV e Anime</p>
+            </div>
+
+            <!-- Box Errori -->
+            <div id="auth-error" class="hidden bg-red-500/20 border border-red-500 text-red-200 p-3 rounded-lg mb-5 text-sm text-center"></div>
+
+            <form id="auth-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Email</label>
+                    <input type="email" id="email" required class="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand text-white transition">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Password</label>
+                    <input type="password" id="password" required minlength="6" class="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand text-white transition">
+                </div>
+                <button type="submit" id="auth-btn" class="w-full bg-brand hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-xl transition duration-200 shadow-lg shadow-indigo-500/30">
+                    Accedi
+                </button>
+            </form>
+
+            <div class="mt-6 text-center text-sm text-gray-400">
+                <span id="auth-toggle-text">Non hai un account?</span>
+                <button id="toggle-auth-mode" class="text-brand hover:text-indigo-400 font-semibold ml-1 transition">Registrati</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCHERMATA APP / DASHBOARD (Nascosta di default) -->
+    <div id="app-container" class="hidden flex-1 flex-col">
+        <!-- Navbar -->
+        <nav class="bg-cardbg p-4 flex justify-between items-center border-b border-gray-700 sticky top-0 z-50">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-clapperboard text-brand text-xl"></i>
+                <h1 class="text-xl font-bold text-white tracking-wide">MediaTracker</h1>
+            </div>
+            <button id="logout-btn" class="text-sm bg-gray-700 hover:bg-red-500/80 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center gap-2">
+                <i class="fa-solid fa-right-from-bracket"></i> Esci
+            </button>
+        </nav>
+        
+        <!-- Main Content: Dashboard -->
+        <main class="p-4 flex-1 max-w-7xl w-full mx-auto flex flex-col gap-6">
+            
+            <!-- Barra di Ricerca e Pulsante Jolly -->
+            <div class="flex flex-col sm:flex-row gap-4 items-center">
+                <div class="relative flex-1 w-full">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="search-input" placeholder="Cerca un film, serie TV o anime..." class="w-full bg-cardbg border border-gray-700 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:border-brand text-white transition shadow-sm">
+                </div>
+                <button id="jolly-btn" class="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-brand hover:from-purple-600 hover:to-indigo-600 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg flex gap-2 justify-center items-center">
+                    <i class="fa-solid fa-dice"></i> <span>Cosa guardo stasera?</span>
+                </button>
+            </div>
+
+            <!-- Contenitore Risultati Ricerca TMDB (Nascosto di default) -->
+            <div id="search-results" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 bg-gray-900/50 p-4 rounded-xl border border-gray-700">
+                <!-- I risultati appariranno qui -->
+            </div>
+
+            <!-- Tab Navigazione Liste Personali -->
+            <div class="flex gap-2 border-b border-gray-700 pb-2 mt-4 overflow-x-auto">
+                <button class="tab-btn active px-4 py-2 text-brand border-b-2 border-brand font-semibold whitespace-nowrap" data-tab="movies">🎬 Film</button>
+                <button class="tab-btn px-4 py-2 text-gray-400 hover:text-gray-200 transition whitespace-nowrap" data-tab="tv">📺 Serie TV</button>
+                <button class="tab-btn px-4 py-2 text-gray-400 hover:text-gray-200 transition whitespace-nowrap" data-tab="anime">🍥 Anime</button>
+            </div>
+
+            <!-- Contenitore Liste Utente -->
+            <div id="user-lists" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <p class="text-gray-500 col-span-full text-center py-10 w-full">La tua lista è vuota. Cerca un titolo per iniziare!</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modulo JavaScript -->
+    <script type="module" src="app.js"></script>
+
+    <!-- MODALE DETTAGLIO / STAGIONI ED EPISODI -->
+<div id="media-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+    <div class="bg-cardbg border border-gray-700 rounded-2xl max-w-md w-full p-6 relative flex flex-col gap-4 shadow-2xl">
+        <button id="close-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+        
+        <div class="flex gap-4 items-center">
+            <img id="modal-poster" src="" alt="" class="w-24 h-36 object-cover rounded-lg border border-gray-700">
+            <div>
+                <h3 id="modal-title" class="text-lg font-bold text-white">Titolo</h3>
+                <p id="modal-category" class="text-xs text-brand font-semibold mt-1">Categoria</p>
+            </div>
+        </div>
+
+        <!-- Sezione Stagioni ed Episodi (Visibile solo per Serie e Anime) -->
+        <div id="modal-seasons-section" class="flex flex-col gap-4 border-t border-gray-700 pt-4">
+            <div class="flex justify-between items-center bg-gray-900 p-3 rounded-xl">
+                <span class="text-sm text-gray-300 font-medium">Stagione</span>
+                <div class="flex items-center gap-3">
+                    <button id="modal-season-minus" class="bg-gray-800 hover:bg-gray-700 text-white w-8 h-8 rounded-lg flex items-center justify-center transition">-</button>
+                    <span id="modal-season-val" class="font-mono text-white font-bold text-lg">1</span>
+                    <button id="modal-season-plus" class="bg-gray-800 hover:bg-gray-700 text-white w-8 h-8 rounded-lg flex items-center justify-center transition">+</button>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center bg-gray-900 p-3 rounded-xl">
+                <span class="text-sm text-gray-300 font-medium">Episodio Visto</span>
+                <div class="flex items-center gap-3">
+                    <button id="modal-ep-minus" class="bg-gray-800 hover:bg-gray-700 text-white w-8 h-8 rounded-lg flex items-center justify-center transition">-</button>
+                    <span id="modal-ep-val" class="font-mono text-white font-bold text-lg">0</span>
+                    <button id="modal-ep-plus" class="bg-gray-800 hover:bg-gray-700 text-white w-8 h-8 rounded-lg flex items-center justify-center transition">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

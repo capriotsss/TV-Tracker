@@ -1,0 +1,21 @@
+{
+  "name": "MediaTracker PWA",
+  "short_name": "MediaTracker",
+  "description": "Traccia Film, Serie TV e Anime",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/6366f1/ffffff?text=MT",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/6366f1/ffffff?text=MT",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
